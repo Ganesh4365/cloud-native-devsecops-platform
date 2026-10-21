@@ -1,0 +1,28 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: cloud-native-alerts
+  namespace: production
+  labels:
+    role: alert-rules
+spec:
+  groups:
+  - name: application-alerts
+    rules:
+    - alert: HighHttpErrorRate
+      expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) * 100 > 5
+      for: 2m
+      labels:
+        severity: critical
+      annotations:
+        summary: "High HTTP 5xx error rate (>5%)"
+        description: "Application is returning 5xx responses for more than 2 minutes."
+
+    - alert: PodCrashLooping
+      expr: rate(kube_pod_container_status_restarts_total[5m]) * 60 > 2
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Pod restart rate is high"
+        description: "Container restart loop detected in production."
